@@ -23,16 +23,25 @@ function TaskListScreen({ navigation }) {
   const [task, setTask] = useState('');
   const [details, setDetails] = useState('');
   const [taskList, setTaskList] = useState([]);
+  const [filteredTaskList, setFilteredTaskList] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editTaskKey, setEditTaskKey] = useState(null); // New state for editing
 
   useEffect(() => {
     loadTasks();
   }, []);
 
+  useEffect(() => {
+    handleSearch();
+  }, [searchQuery, taskList]);
+
   const loadTasks = async () => {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
       if (storedTasks !== null) {
-        setTaskList(JSON.parse(storedTasks));
+        const parsedTasks = JSON.parse(storedTasks);
+        setTaskList(parsedTasks);
+        setFilteredTaskList(parsedTasks);
       }
     } catch (error) {
       console.error('Failed to load tasks.');
@@ -47,14 +56,34 @@ function TaskListScreen({ navigation }) {
     }
   };
 
-  const addTask = () => {
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      const filteredTasks = taskList.filter(item =>
+        item.task.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredTaskList(filteredTasks);
+    } else {
+      setFilteredTaskList(taskList);
+    }
+  };
+
+  const addOrEditTask = () => {
     if (task.trim()) {
-      const newTask = { key: Math.random().toString(), task, completed: false, details };
-      const updatedTasks = [...taskList, newTask];
-      setTaskList(updatedTasks);
+      if (editTaskKey) {
+        const updatedTasks = taskList.map(item =>
+          item.key === editTaskKey ? { ...item, task, details } : item
+        );
+        setTaskList(updatedTasks);
+        setEditTaskKey(null);
+      } else {
+        const newTask = { key: Math.random().toString(), task, completed: false, details };
+        const updatedTasks = [...taskList, newTask];
+        setTaskList(updatedTasks);
+      }
+
       setTask('');
       setDetails('');
-      saveTasks(updatedTasks);
+      saveTasks(taskList);
     }
   };
 
@@ -72,10 +101,27 @@ function TaskListScreen({ navigation }) {
     saveTasks(updatedTasks);
   };
 
+  const editTask = (task) => {
+    setTask(task.task);
+    setDetails(task.details);
+    setEditTaskKey(task.key); // Set key to identify task being edited
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>My To-Do List</Text>
 
+      {/* Search Input */}
+      <View style={styles.searchContainer}>
+        <TextInput 
+          style={styles.searchInput}
+          placeholder="Search tasks..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      {/* Task Input */}
       <View style={styles.inputContainer}>
         <TextInput 
           style={styles.taskInput}
@@ -85,6 +131,7 @@ function TaskListScreen({ navigation }) {
         />
       </View>
 
+      {/* Details Input */}
       <View style={styles.inputContainer}>
         <TextInput 
           style={styles.detailsInput}
@@ -96,15 +143,16 @@ function TaskListScreen({ navigation }) {
         />
         <TouchableOpacity 
           style={styles.addButton} 
-          onPress={addTask}
+          onPress={addOrEditTask}
           activeOpacity={0.8}
         >
-          <Text style={styles.addButtonText}>Add</Text>
+          <Text style={styles.addButtonText}>{editTaskKey ? 'Edit' : 'Add'}</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Task List */}
       <FlatList 
-        data={taskList}
+        data={filteredTaskList}
         renderItem={({ item }) => (
           <View style={[styles.taskItem, { borderColor: item.completed ? '#28a745' : '#FFA62F' }]}>
             <TouchableOpacity onPress={() => navigation.navigate('TaskDetails', { task: item })}>
@@ -123,6 +171,9 @@ function TaskListScreen({ navigation }) {
               </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteTask(item.key)}>
                 <Icon name="delete" size={30} color="#dc3545" style={styles.icon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => editTask(item)}>
+                <Icon name="edit" size={30} color="#FFA62F" style={styles.icon} />
               </TouchableOpacity>
             </View>
           </View>
@@ -147,6 +198,17 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     letterSpacing: 1,
   },
+  searchContainer: {
+    marginBottom: 20,
+  },
+  searchInput: {
+    borderColor: '#FFA62F',
+    borderWidth: 2,
+    padding: 7,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    fontSize: 16,
+  },
   inputContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -158,7 +220,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 15,
     flex: 1,
-    marginRight: 10,
+    marginRight: 2,
     borderRadius: 8,
     backgroundColor: '#fff',
     fontSize: 16,
@@ -200,7 +262,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 15,
+    padding: 11,
     marginVertical: 10,
     borderRadius: 10,
     elevation: 2,
@@ -208,7 +270,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
-    borderWidth: 2, // Add border width
+    borderWidth: 2, 
   },
   taskText: {
     fontSize: 20,
@@ -224,6 +286,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   icon: {
-    marginLeft: 10, 
+    marginLeft: 2, 
   },
 });
