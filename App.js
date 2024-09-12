@@ -78,20 +78,27 @@ function TaskListScreen({ navigation }) {
 
       <View style={styles.inputContainer}>
         <TextInput 
-          style={styles.input} 
+          style={styles.taskInput}
           placeholder="Enter a task"
           value={task}
           onChangeText={setTask}
         />
       </View>
+
       <View style={styles.inputContainer}>
         <TextInput 
-          style={styles.input} 
+          style={styles.detailsInput}
           placeholder="Enter task details"
           value={details}
           onChangeText={setDetails}
+          multiline={true}
+          numberOfLines={4}
         />
-        <TouchableOpacity style={styles.addButton} onPress={addTask}>
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={addTask}
+          activeOpacity={0.8}
+        >
           <Text style={styles.addButtonText}>Add</Text>
         </TouchableOpacity>
       </View>
@@ -99,7 +106,7 @@ function TaskListScreen({ navigation }) {
       <FlatList 
         data={taskList}
         renderItem={({ item }) => (
-          <View style={styles.taskItem}>
+          <View style={[styles.taskItem, { borderColor: item.completed ? '#28a745' : '#FFA62F' }]}>
             <TouchableOpacity onPress={() => navigation.navigate('TaskDetails', { task: item })}>
               <Text style={[styles.taskText, item.completed && styles.completedText]}>
                 {item.task}
@@ -111,10 +118,11 @@ function TaskListScreen({ navigation }) {
                   name={item.completed ? "check-circle" : "radio-button-unchecked"} 
                   size={30} 
                   color={item.completed ? '#28a745' : '#007BFF'} 
+                  style={styles.icon}
                 />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteTask(item.key)}>
-                <Icon name="delete" size={30} color="#dc3545" />
+                <Icon name="delete" size={30} color="#dc3545" style={styles.icon} />
               </TouchableOpacity>
             </View>
           </View>
@@ -125,17 +133,16 @@ function TaskListScreen({ navigation }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#91DDCF',
     padding: 20,
   },
   heading: {
     fontSize: 32,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#fff',
     textAlign: 'center',
     marginVertical: 20,
     letterSpacing: 1,
@@ -146,8 +153,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  input: {
-    borderColor: '#007BFF',
+  taskInput: {
+    borderColor: '#FFA62F',
     borderWidth: 2,
     padding: 15,
     flex: 1,
@@ -155,9 +162,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
     fontSize: 16,
+    height: 50,
+  },
+  detailsInput: {
+    borderColor: '#FFA62F',
+    borderWidth: 2,
+    padding: 15,
+    flex: 1,
+    marginRight: 10,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    fontSize: 16,
+    textAlignVertical: 'top',
+    height: 100,
   },
   addButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#FFA62F',
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -188,10 +208,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
+    borderWidth: 2, // Add border width
   },
   taskText: {
-    fontSize: 18,
-    color: '#333',
+    fontSize: 20,
+    color: '#FFA62F',
     flex: 1,
   },
   completedText: {
@@ -201,5 +222,8 @@ const styles = StyleSheet.create({
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  icon: {
+    marginLeft: 10, 
   },
 });
